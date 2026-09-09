@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from psycopg.errors import UniqueViolation
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
 
 class CandidateRepository:
@@ -16,9 +17,16 @@ class CandidateRepository:
         except IntegrityError as exc:
             await self.session.rollback()
 
-            if "UniqueViolation" in str(exc.orig):
+            if isinstance(exc.orig, UniqueViolation):
+                messages = []
+                if exc.orig.diag.constraint_name == "ix_candidates_email":
+                    messages.append("Email already taken")
+
+                if exc.orig.diag.constraint_name == "ix_candidates_phone":
+                    messages.append("Phone already taken")
+
                 raise DuplicateResourceError(
-                    "Candidate already exists"
+                    ', '.join(messages)
                 )
-            
+
             raise

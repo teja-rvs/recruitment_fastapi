@@ -13,7 +13,7 @@ class CreateCandidateSchema(BaseModel):
     name: str = Field(min_length=3, max_length=26, description="Name of the candidate")
     email: EmailStr = Field(description="Email of the candidate")
     phone: PhoneNumber = Field(description="Phone number of the candidate")
-    experience: int = Field(gt=0,le=100,description="Experience of the candidate")
+    experience: int = Field(ge=0,le=100,description="Experience of the candidate")
 
 class CandidateResponseSchema(CreateCandidateSchema):
     id: int

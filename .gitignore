@@ -9,5 +9,20 @@ wheels/
 # Virtual environments
 .venv
 
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Test / lint caches
+.pytest_cache/
+.ruff_cache/
+
 # Coverage
+.coverage
+.coverage.*
+coverage.xml
 htmlcov/
+
+# OS
+.DS_Store

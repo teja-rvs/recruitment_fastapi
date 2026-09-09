@@ -1,5 +1,3 @@
-import os
-
 from dotenv import load_dotenv
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -8,16 +6,14 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
+from recruitment_fastapi.config import settings
 
 load_dotenv()
 
-DATABASE_URL = os.environ["DATABASE_URL"]
-
 engine = create_async_engine(
-    DATABASE_URL,
+    settings.database_url,
     echo=True,
 )
-
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
@@ -30,6 +26,6 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_db():
+async def get_session():
     async with AsyncSessionLocal() as session:
         yield session

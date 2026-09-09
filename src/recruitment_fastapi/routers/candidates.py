@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from recruitment_fastapi.database import get_db
+from recruitment_fastapi.database import get_session
 from recruitment_fastapi.models.candidate import Candidate
 from recruitment_fastapi.respositories.candidate import CandidateRepository
 from recruitment_fastapi.schemas.candidates import (
@@ -20,7 +20,7 @@ router = APIRouter(
 
 
 def get_candidate_service(
-    session: AsyncSession = Depends(get_db),
+    session: AsyncSession = Depends(get_session),
 ) -> CandidateService:
 
     repository = CandidateRepository(session)
@@ -37,7 +37,9 @@ async def register_candidate(
     service: CandidateService = Depends(get_candidate_service),
 ):
     try:
-        return await service.create_candidate(candidate)
+        candidate = await service.create_candidate(candidate)
+        return candidate
+    
     except DuplicateResourceError as exc:
         raise HTTPException(
             status_code=409,
