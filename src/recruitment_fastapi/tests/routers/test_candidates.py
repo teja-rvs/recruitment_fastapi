@@ -1,16 +1,18 @@
 import random
+
 import pytest
 from faker import Faker
 
 fake = Faker()
+
 
 @pytest.fixture
 def valid_candidate_payload():
     return {
         "name": fake.name(),
         "email": fake.email(),
-        "phone": f"+9199999{random.randint(9999,99999)}",
-        "experience": random.randint(0,10)
+        "phone": f"+9199999{random.randint(9999, 99999)}",
+        "experience": random.randint(0, 10),
     }
 
 
@@ -37,11 +39,11 @@ def test_successful_candidate_registration(client, valid_candidate_payload):
 @pytest.mark.parametrize(
     "field, invalid_value",
     [
-        ("name", "Q"*101),  # Too long
+        ("name", "Q" * 101),  # Too long
         ("name", "QE"),  # Too short
         ("email", "test@example@com"),  # Invalid format
         ("phone", "1234567890"),  # Invalid format
-        ("experience", -5) # Invalid experience
+        ("experience", -5),  # Invalid experience
     ],
 )
 def test_candidate_registration_invalid_field(
@@ -67,22 +69,23 @@ def test_candidate_registration_with_missing_fields(client):
 
 
 def test_candidate_registration_duplicate_email(client, valid_candidate_payload):
-    response = client.post("/candidates/register",json=valid_candidate_payload)
+    response = client.post("/candidates/register", json=valid_candidate_payload)
 
     assert response.status_code == 200
 
-    response = client.post("/candidates/register",json=valid_candidate_payload)
+    response = client.post("/candidates/register", json=valid_candidate_payload)
 
     assert response.status_code == 409
     assert response.json()["detail"] == "Email already taken"
 
+
 def test_candidate_registration_duplicate_phone(client, valid_candidate_payload):
-    response = client.post("/candidates/register",json=valid_candidate_payload)
+    response = client.post("/candidates/register", json=valid_candidate_payload)
 
     assert response.status_code == 200
 
-    payload = {**valid_candidate_payload, "email": "new@example.com" }
-    response = client.post("/candidates/register",json=payload)
+    payload = {**valid_candidate_payload, "email": "new@example.com"}
+    response = client.post("/candidates/register", json=payload)
 
     assert response.status_code == 409
     assert response.json()["detail"] == "Phone already taken"
