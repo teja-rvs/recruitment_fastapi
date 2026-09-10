@@ -1,7 +1,9 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.exc import IntegrityError
 from psycopg.errors import UniqueViolation
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
+
 
 class CandidateRepository:
     def __init__(self, session: AsyncSession):
@@ -25,8 +27,6 @@ class CandidateRepository:
                 if exc.orig.diag.constraint_name == "ix_candidates_phone":
                     messages.append("Phone already taken")
 
-                raise DuplicateResourceError(
-                    ', '.join(messages)
-                )
+                raise DuplicateResourceError(", ".join(messages))
 
             raise

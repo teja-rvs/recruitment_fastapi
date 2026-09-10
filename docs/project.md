@@ -97,7 +97,7 @@ src/recruitment_fastapi/
   database.py             # Async engine and session
   routers/candidates.py   # HTTP layer
   services/candidate.py   # Type selection and create flow
-  respositories/          # Persistence
+  repositories/          # Persistence
   models/                 # Candidate + entry/mid/senior subclasses
   schemas/candidates.py   # Request/response models
   tests/                  # API tests

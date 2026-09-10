@@ -7,7 +7,7 @@ fake = Faker()
 
 
 @pytest.fixture
-def valid_candidate_payload():
+def valid_candidate_payload() -> dict:
     return {
         "name": fake.name(),
         "email": fake.email(),
@@ -73,7 +73,8 @@ def test_candidate_registration_duplicate_email(client, valid_candidate_payload)
 
     assert response.status_code == 200
 
-    response = client.post("/candidates/register", json=valid_candidate_payload)
+    payload = {**valid_candidate_payload, "phone": "+919000000000"}
+    response = client.post("/candidates/register", json=payload)
 
     assert response.status_code == 409
     assert response.json()["detail"] == "Email already taken"

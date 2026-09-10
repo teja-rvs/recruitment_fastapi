@@ -4,17 +4,22 @@ from recruitment_fastapi.schemas.candidates import CreateCandidateSchema
 
 
 class CandidateService:
-    def __init__(self, respository: CandidateRepository):
-        self.respository = respository
+    def __init__(self, repository: CandidateRepository):
+        self.repository = repository
 
-    def candidate_klass(self, exp: int):
+    async def create_candidate(self, data: CreateCandidateSchema):
+        candidate_class = self._candidate_class(data.experience)
+        candidate = candidate_class(**data.model_dump())
+        return await self.repository.create(candidate)
+
+    # Private
+
+    def _candidate_class(
+        self, exp: int
+    ) -> type[EntryCandidate | MidCandidate | SeniorCandidate]:
         if exp <= 3:
             return EntryCandidate
         elif exp <= 6:
             return MidCandidate
         else:
             return SeniorCandidate
-
-    async def create_candidate(self, data: CreateCandidateSchema):
-        candidate = self.candidate_klass(data.experience)(**data.model_dump())
-        return await self.respository.create(candidate)
