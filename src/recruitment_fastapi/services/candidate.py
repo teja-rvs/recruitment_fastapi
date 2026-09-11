@@ -8,14 +8,15 @@ class CandidateService:
         self.repository = repository
 
     async def create_candidate(self, data: CreateCandidateSchema):
-        candidate_class = self._candidate_class(data.experience)
+        candidate_class = self.__candidate_class(data.experience)
         candidate = candidate_class(**data.model_dump())
         return await self.repository.create(candidate)
 
     # Private
 
-    def _candidate_class(
-        self, exp: int
+    def __candidate_class(
+        self,
+        exp: int,
     ) -> type[EntryCandidate | MidCandidate | SeniorCandidate]:
         if exp <= 3:
             return EntryCandidate
