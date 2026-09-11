@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
-from recruitment_fastapi.database import get_session
+from fastapi import APIRouter, Depends, HTTPException
+
+from recruitment_fastapi.database import SessionDep
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
 from recruitment_fastapi.repositories.candidate import CandidateRepository
 from recruitment_fastapi.schemas.candidates import (
@@ -16,26 +17,21 @@ router = APIRouter(
 )
 
 
-def get_candidate_service(
-    session: AsyncSession = Depends(get_session),
-) -> CandidateService:
-
-    repository = CandidateRepository(session)
-
-    return CandidateService(repository)
+def get_candidate_service(session: SessionDep) -> CandidateService:
+    return CandidateService(CandidateRepository(session))
 
 
-@router.post(
-    "/register",
-    response_model=CandidateResponseSchema,
-)
+CandidateServiceDep = Annotated[CandidateService, Depends(get_candidate_service)]
+
+
+@router.post("/register")
 async def register_candidate(
     candidate: CreateCandidateSchema,
-    service: CandidateService = Depends(get_candidate_service),
-):
+    service: CandidateServiceDep,
+) -> CandidateResponseSchema:
     try:
-        candidate = await service.create_candidate(candidate)
-        return candidate
-
+        created = await service.create_candidate(candidate)
     except DuplicateResourceError as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return CandidateResponseSchema.model_validate(created)

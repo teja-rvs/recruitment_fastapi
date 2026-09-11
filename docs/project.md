@@ -26,7 +26,7 @@ Example:
 DATABASE_URL=postgresql+psycopg://recruitment:password@localhost:5432/recruitment
 ```
 
-The app reads `DATABASE_URL` via `pydantic-settings`. On startup it creates tables with `Base.metadata.create_all`.
+The app reads `DATABASE_URL` via `pydantic-settings`. Schema changes are applied with Alembic before the app starts, not at startup.
 
 ## API
 
@@ -100,7 +100,7 @@ src/recruitment_fastapi/
   repositories/          # Persistence
   models/                 # Candidate + entry/mid/senior subclasses
   schemas/candidates.py   # Request/response models
-  tests/                  # API tests
   alembic/                # Migrations
+tests/                    # Pytest suite (unit and integration)
 docker-compose.yml        # Local Postgres
 ```

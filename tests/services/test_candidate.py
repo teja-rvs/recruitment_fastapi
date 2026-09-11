@@ -11,6 +11,8 @@ from recruitment_fastapi.repositories.candidate import CandidateRepository
 from recruitment_fastapi.schemas.candidates import CreateCandidateSchema
 from recruitment_fastapi.services.candidate import CandidateService
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def repository() -> AsyncMock:
@@ -24,18 +26,18 @@ def service(repository: AsyncMock) -> CandidateService:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "experience, expected_class",
+    ("experience", "expected_class"),
     [
-        (0, EntryCandidate),
-        (3, EntryCandidate),
-        (4, MidCandidate),
-        (6, MidCandidate),
-        (7, SeniorCandidate),
+        pytest.param(0, EntryCandidate, id="entry-min"),
+        pytest.param(3, EntryCandidate, id="entry-max"),
+        pytest.param(4, MidCandidate, id="mid-min"),
+        pytest.param(6, MidCandidate, id="mid-max"),
+        pytest.param(7, SeniorCandidate, id="senior-min"),
     ],
 )
 async def test_create_candidate(
     service: CandidateService,
-    repository: CandidateRepository,
+    repository: AsyncMock,
     experience: int,
     expected_class: type,
 ):

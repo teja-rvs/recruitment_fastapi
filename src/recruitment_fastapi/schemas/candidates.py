@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
@@ -19,6 +19,8 @@ class CreateCandidateSchema(BaseModel):
 
 
 class CandidateResponseSchema(CreateCandidateSchema):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     type: CandidateType
     created_at: datetime

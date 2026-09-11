@@ -9,6 +9,8 @@ from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourc
 from recruitment_fastapi.models.candidate import Candidate
 from recruitment_fastapi.repositories.candidate import CandidateRepository
 
+pytestmark = pytest.mark.unit
+
 
 class MockUniqueViolation(UniqueViolation):
     def __init__(self, message: str = "Mock Unique Violation"):
@@ -26,7 +28,9 @@ class MockUniqueViolation(UniqueViolation):
 
 @pytest.fixture
 def session() -> AsyncMock:
-    return AsyncMock()
+    mock_session = AsyncMock()
+    mock_session.add = Mock()
+    return mock_session
 
 
 @pytest.fixture

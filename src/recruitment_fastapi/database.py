@@ -1,4 +1,8 @@
+from collections.abc import AsyncIterator
+from typing import Annotated
+
 from dotenv import load_dotenv
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -26,6 +30,9 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_session():
+async def get_session() -> AsyncIterator[AsyncSession]:
     async with AsyncSessionLocal() as session:
         yield session
+
+
+SessionDep = Annotated[AsyncSession, Depends(get_session)]

@@ -35,14 +35,25 @@ requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.pytest.ini_options]
-addopts = "--cov=src/recruitment_fastapi --cov-report=term-missing"
+testpaths = ["tests"]
+asyncio_mode = "strict"
+strict = true
+addopts = [
+    "-ra",
+    "--import-mode=importlib",
+    "--cov",
+    "--cov-report=term-missing",
+]
+markers = [
+    "unit: tests that do not use the database or HTTP stack",
+    "integration: tests that use the database or HTTP stack",
+]
 
 [tool.coverage.run]
 source = ["src/recruitment_fastapi"]
 omit = [
-    "tests/*",
-    "recruitment_fastapi/migrations/*",
-    "recruitment_fastapi/__init__.py"
+    "src/recruitment_fastapi/alembic/*",
+    "src/recruitment_fastapi/__init__.py",
 ]
 
 [tool.coverage.report]
@@ -53,3 +64,16 @@ show_missing= true
 dev = [
     "pytest-cov>=7.1.0",
 ]
+
+[tool.fastapi]
+entrypoint = "recruitment_fastapi.main:app"
+
+[tool.ruff]
+target-version = "py314"
+src = ["src"]
+
+[tool.ruff.lint]
+extend-select = ["FAST"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["recruitment_fastapi", "tests"]
