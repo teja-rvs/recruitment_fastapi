@@ -30,6 +30,7 @@ class MockUniqueViolation(UniqueViolation):
 def session() -> AsyncMock:
     mock_session = AsyncMock()
     mock_session.add = Mock()
+    mock_session.refresh = AsyncMock()
     return mock_session
 
 

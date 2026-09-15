@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from recruitment_fastapi.database import engine
+from recruitment_fastapi.routers.auth import router as auth_router
 from recruitment_fastapi.routers.candidates import router as candidates_router
 
 
@@ -16,6 +17,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Recruitment API", lifespan=lifespan)
 app.include_router(candidates_router)
+app.include_router(auth_router)
 
 
 @app.exception_handler(IntegrityError)

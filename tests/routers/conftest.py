@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from recruitment_fastapi.database import Base
 from tests.database_config import resolve_test_database_url
 
 
@@ -39,18 +40,33 @@ def client(test_engine: AsyncEngine) -> Iterator[TestClient]:
         async with session_factory() as session:
             yield session
 
-    anyio.run(_truncate_candidates, test_engine)
+    # anyio.run(_truncate_candidates, test_engine)
+    anyio.run(_truncate_tables, test_engine)
     app.dependency_overrides[get_session] = override_get_session
     try:
         with TestClient(app) as test_client:
             yield test_client
     finally:
         app.dependency_overrides.clear()
-        anyio.run(_truncate_candidates, test_engine)
+        # anyio.run(_truncate_candidates, test_engine)
+        anyio.run(_truncate_tables, test_engine)
 
 
-async def _truncate_candidates(engine: AsyncEngine) -> None:
+# async def _truncate_candidates(engine: AsyncEngine) -> None:
+#     async with engine.begin() as connection:
+#         await connection.execute(
+#             text("TRUNCATE TABLE candidates RESTART IDENTITY CASCADE")
+#         )
+
+
+async def _truncate_tables(engine: AsyncEngine) -> None:
+    table_names = ", ".join(
+        f'"{table.name}"'
+        for table in Base.metadata.sorted_tables
+        if table.name != "alembic_version"
+    )
+
     async with engine.begin() as connection:
         await connection.execute(
-            text("TRUNCATE TABLE candidates RESTART IDENTITY CASCADE")
+            text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE")
         )
