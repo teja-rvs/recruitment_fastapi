@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 
 from recruitment_fastapi.database import SessionDep
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
@@ -17,8 +17,10 @@ router = APIRouter(
 )
 
 
-def get_candidate_service(session: SessionDep) -> CandidateService:
-    return CandidateService(CandidateRepository(session))
+def get_candidate_service(
+    session: SessionDep, background_tasks: BackgroundTasks
+) -> CandidateService:
+    return CandidateService(CandidateRepository(session), background_tasks)
 
 
 CandidateServiceDep = Annotated[CandidateService, Depends(get_candidate_service)]

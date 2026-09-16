@@ -1,8 +1,10 @@
 from psycopg.errors import UniqueViolation
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
+from recruitment_fastapi.models.candidate import Candidate
 
 
 class CandidateRepository:
@@ -30,3 +32,7 @@ class CandidateRepository:
                 raise DuplicateResourceError(", ".join(messages))
 
             raise
+
+    async def find(self, id: int):
+        candidates = await self.session.execute(select(Candidate).filter_by(id=id))
+        return candidates.scalar_one_or_none()

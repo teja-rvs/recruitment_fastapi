@@ -1,40 +1,31 @@
 from datetime import datetime
 from typing import ClassVar
 
-from sqlalchemy import DateTime, Integer, String
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from recruitment_fastapi.database import Base
 
 
-class Candidate(Base):
-    __tablename__ = "candidates"
+class RecruitmentStep(Base):
+    __tablename__ = "recruitment_steps"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-
-    name: Mapped[str] = mapped_column(String(50), nullable=False)
-
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
-    )
-
-    phone: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
-
-    experience: Mapped[int] = mapped_column(Integer, nullable=False)
 
     type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
 
     __mapper_args__: ClassVar = {
         "polymorphic_on": "type",
-        "polymorphic_identity": "candidate",
+        "polymorphic_identity": "recruitment_step",
     }
 
-    recruitment_steps: Mapped[list["RecruitmentStep"]] = relationship(  # noqa: F821, UP037 # type: ignore
-        back_populates="candidate"
+    candidate_id: Mapped[int] = mapped_column(
+        ForeignKey("candidates.id"), nullable=False
     )
+    candidate: Mapped["Candidate"] = relationship(back_populates="recruitment_steps")  # type: ignore # noqa: F821, UP037
+
+    interview_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
