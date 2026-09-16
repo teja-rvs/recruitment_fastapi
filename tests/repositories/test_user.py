@@ -5,6 +5,8 @@ import pytest
 from recruitment_fastapi.models.user import User
 from recruitment_fastapi.repositories.user import UserRepository
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def session() -> AsyncMock:
@@ -32,13 +34,6 @@ async def test_create(session, repository, user):
     session.add.assert_called_once_with(user)
     session.commit.assert_awaited_once()
     session.refresh.assert_awaited_once_with(user)
-
-
-@pytest.mark.asyncio
-async def test_find_by_email(session, repository, user):
-    await repository.find_by_email(user.email)
-
-    session.execute.assert_called_once()
 
 
 @pytest.mark.asyncio

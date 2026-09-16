@@ -41,7 +41,14 @@ async def signup(
 ) -> TokenResponseSchema:
     user = await sign_up_service.sign_up(data)
 
-    return TokenResponseSchema(access_token=token_service.encode({"user_id": user.id}))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+
+    return TokenResponseSchema(
+        access_token=await token_service.encode({"user_id": user.id})
+    )
 
 
 @router.post("/login")
@@ -58,4 +65,6 @@ async def login(
             detail="Incorrect email or password",
         )
 
-    return TokenResponseSchema(access_token=token_service.encode({"user_id": user.id}))
+    return TokenResponseSchema(
+        access_token=await token_service.encode({"user_id": user.id})
+    )

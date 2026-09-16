@@ -8,6 +8,8 @@ from recruitment_fastapi.schemas.auth import LoginSchema
 from recruitment_fastapi.services.login import LoginService
 from recruitment_fastapi.services.password import password_hash
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def repository() -> AsyncMock:
@@ -52,19 +54,21 @@ async def test_authenticate_returns_user_for_valid_credentials(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("email", "password"),
+    ("email", "password", "user_exists"),
     [
-        ("invalid@example.com", "password"),
-        ("test@example.com", "invalid-password"),
+        pytest.param("invalid@example.com", "password", False, id="unknown-email"),
+        pytest.param("test@example.com", "invalid-password", True, id="wrong-password"),
     ],
 )
 async def test_authenticate_returns_false_for_invalid_credentials(
     repository,
     service,
+    db_user,
     email,
     password,
+    user_exists,
 ):
-    repository.find_by_email.return_value = None
+    repository.find_by_email.return_value = db_user if user_exists else None
 
     login_data = LoginSchema(
         email=email,

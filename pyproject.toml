@@ -10,6 +10,7 @@ requires-python = ">=3.14"
 dependencies = [
     "alembic>=1.19.2",
     "anyio<4.15",
+    "asyncer>=0.0.18",
     "asyncpg>=0.31.0",
     "email-validator>=2.3.0",
     "faker>=40.38.0",
@@ -21,7 +22,6 @@ dependencies = [
     "pwdlib[argon2]>=0.3.1",
     "pydantic>=2.13.5",
     "pydantic-settings>=2.15.0",
-    "pyjwt>=2.14.0",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "python-dotenv>=1.2.3",

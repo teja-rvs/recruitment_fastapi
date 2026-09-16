@@ -2,12 +2,12 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from recruitment_fastapi.repositories.user import UserRepository
-from recruitment_fastapi.services.sign_up import SignUpService
-from recruitment_fastapi.schemas.auth import SignUpSchema
 from recruitment_fastapi.models.user import User
+from recruitment_fastapi.repositories.user import UserRepository
+from recruitment_fastapi.schemas.auth import SignUpSchema
+from recruitment_fastapi.services.sign_up import SignUpService
 
-from fastapi import HTTPException
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
@@ -43,6 +43,10 @@ async def test_successful_sign_up(repository, service, sign_up_data, user_fixtur
     user = await service.sign_up(sign_up_data)
 
     assert user.email == sign_up_data.email
+    repository.create.assert_awaited_once()
+    created_user = repository.create.await_args.args[0]
+    assert created_user.email == sign_up_data.email
+    assert created_user.password_hash != sign_up_data.password.get_secret_value()
 
 
 @pytest.mark.asyncio
@@ -51,5 +55,7 @@ async def test_sign_up_with_existing_user(
 ):
     repository.find_by_email.return_value = user_fixture
 
-    with pytest.raises(HTTPException, match="Email already registered"):
-        await service.sign_up(sign_up_data)
+    user = await service.sign_up(sign_up_data)
+
+    assert user is False
+    repository.create.assert_not_awaited()

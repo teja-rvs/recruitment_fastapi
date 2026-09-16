@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from asyncer import asyncify
 
 from recruitment_fastapi.models.user import User
 from recruitment_fastapi.repositories.user import UserRepository
@@ -11,17 +11,17 @@ class SignUpService:
         self.repository = repository
 
     async def sign_up(self, data: SignUpSchema) -> User:
-        await self.__user_exists(data.email)
+        user = await self.repository.find_by_email(data.email)
 
+        if user:
+            return False
+
+        hashed_password = await asyncify(password_hash.hash)(
+            data.password.get_secret_value()
+        )
         user = User(
             email=data.email,
-            password_hash=password_hash.hash(data.password.get_secret_value()),
+            password_hash=hashed_password,
         )
 
         return await self.repository.create(user)
-
-    async def __user_exists(self, email: str):
-        user = await self.repository.find_by_email(email)
-
-        if user:
-            raise HTTPException(status_code=400, detail="Email already registered")

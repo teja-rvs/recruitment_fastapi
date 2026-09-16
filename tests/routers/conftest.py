@@ -40,7 +40,6 @@ def client(test_engine: AsyncEngine) -> Iterator[TestClient]:
         async with session_factory() as session:
             yield session
 
-    # anyio.run(_truncate_candidates, test_engine)
     anyio.run(_truncate_tables, test_engine)
     app.dependency_overrides[get_session] = override_get_session
     try:
@@ -48,15 +47,7 @@ def client(test_engine: AsyncEngine) -> Iterator[TestClient]:
             yield test_client
     finally:
         app.dependency_overrides.clear()
-        # anyio.run(_truncate_candidates, test_engine)
         anyio.run(_truncate_tables, test_engine)
-
-
-# async def _truncate_candidates(engine: AsyncEngine) -> None:
-#     async with engine.begin() as connection:
-#         await connection.execute(
-#             text("TRUNCATE TABLE candidates RESTART IDENTITY CASCADE")
-#         )
 
 
 async def _truncate_tables(engine: AsyncEngine) -> None:

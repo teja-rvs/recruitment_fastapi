@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
+from asyncer import asyncify
 from jose import jwt
 
 from recruitment_fastapi.config import settings
@@ -9,7 +10,7 @@ ALGORITHM = "HS256"
 
 
 class TokenService:
-    def encode(self, data: dict, expires_delta: timedelta | None = None) -> str:
+    async def encode(self, data: dict, expires_delta: timedelta | None = None) -> str:
         to_encode = data.copy()
 
         if expires_delta is not None:
@@ -19,6 +20,4 @@ class TokenService:
 
         to_encode.update({"exp": expire})
 
-        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, ALGORITHM)
-
-        return encoded_jwt
+        return await asyncify(jwt.encode)(to_encode, SECRET_KEY, ALGORITHM)
