@@ -25,7 +25,9 @@ class RecruitmentStep(Base):
     )
     candidate: Mapped["Candidate"] = relationship(back_populates="recruitment_steps")  # type: ignore # noqa: F821, UP037
 
-    interview_date: Mapped[DateTime] = mapped_column(DateTime(timezone=True))
+    interview_date: Mapped[DateTime] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

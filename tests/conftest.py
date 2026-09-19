@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 ALEMBIC_INI = PROJECT_ROOT / "src" / "recruitment_fastapi" / "alembic.ini"
 
-_UNIT_TEST_DIR_NAMES = frozenset({"services", "repositories"})
+_UNIT_TEST_DIR_NAMES = frozenset({"services", "repositories", "jobs"})
 
 
 def _session_needs_test_database(config: pytest.Config) -> bool:

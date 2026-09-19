@@ -1,24 +1,22 @@
-from collections.abc import Iterator
+from collections.abc import Awaitable, Callable, Iterator
+from typing import TypeVar
 
 import anyio
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
-from recruitment_fastapi.database import Base
-from tests.database_config import resolve_test_database_url
+from recruitment_fastapi.database import get_session
+from recruitment_fastapi.main import app
+
+T = TypeVar("T")
 
 
 @pytest.fixture(scope="session")
 def test_engine() -> Iterator[AsyncEngine]:
-    database_url = resolve_test_database_url(require_test_database=True)
-    engine = create_async_engine(database_url)
+    from recruitment_fastapi.database import engine
+
     try:
         yield engine
     finally:
@@ -26,16 +24,32 @@ def test_engine() -> Iterator[AsyncEngine]:
 
 
 @pytest.fixture
-def client(test_engine: AsyncEngine) -> Iterator[TestClient]:
-    from recruitment_fastapi.database import get_session
-    from recruitment_fastapi.main import app
-
-    session_factory = async_sessionmaker(
+def session_factory(test_engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(
         test_engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
 
+
+@pytest.fixture
+def db_session(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> Callable[[Callable[[AsyncSession], Awaitable[T]]], T]:
+    def run(operation: Callable[[AsyncSession], Awaitable[T]]) -> T:
+        async def _inner() -> T:
+            async with session_factory() as session:
+                return await operation(session)
+
+        return anyio.run(_inner)
+
+    return run
+
+
+@pytest.fixture
+def client(
+    test_engine: AsyncEngine, session_factory: async_sessionmaker[AsyncSession]
+) -> Iterator[TestClient]:
     async def override_get_session():
         async with session_factory() as session:
             yield session
@@ -51,6 +65,8 @@ def client(test_engine: AsyncEngine) -> Iterator[TestClient]:
 
 
 async def _truncate_tables(engine: AsyncEngine) -> None:
+    from recruitment_fastapi.database import Base
+
     table_names = ", ".join(
         f'"{table.name}"'
         for table in Base.metadata.sorted_tables

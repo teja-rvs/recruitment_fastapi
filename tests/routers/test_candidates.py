@@ -4,7 +4,16 @@ import phonenumbers
 import pytest
 from phonenumbers import PhoneNumberFormat
 
+from recruitment_fastapi.models import EntryCandidate, MidCandidate, SeniorCandidate
+from recruitment_fastapi.repositories.recruitment_step import RecruitmentStepRepository
+
 pytestmark = pytest.mark.integration
+
+_CANDIDATE_BY_TYPE = {
+    EntryCandidate.CANDIDATE_TYPE: EntryCandidate,
+    MidCandidate.CANDIDATE_TYPE: MidCandidate,
+    SeniorCandidate.CANDIDATE_TYPE: SeniorCandidate,
+}
 
 
 @pytest.fixture
@@ -50,15 +59,38 @@ def _phone_uri(value: str) -> str:
     return phonenumbers.format_number(parsed, PhoneNumberFormat.RFC3966)
 
 
-def test_successful_candidate_registration(client, valid_candidate_payload):
-    response = client.post("/candidates/register", json=valid_candidate_payload)
+@pytest.mark.parametrize(
+    ("field", "value", "candidate_type"),
+    [
+        pytest.param("experience", 1, EntryCandidate.CANDIDATE_TYPE),
+        pytest.param("experience", 4, MidCandidate.CANDIDATE_TYPE),
+        pytest.param("experience", 10, SeniorCandidate.CANDIDATE_TYPE),
+    ],
+)
+def test_successful_candidate_registration(
+    client, db_session, valid_candidate_payload, field, value, candidate_type
+):
+    payload = {**valid_candidate_payload, field: value}
+    response = client.post("/candidates/register", json=payload)
     data = response.json()
 
     assert response.status_code == 200
-    assert data["name"] == valid_candidate_payload["name"]
-    assert data["email"] == valid_candidate_payload["email"]
-    assert data["phone"] == _phone_uri(valid_candidate_payload["phone"])
-    assert data["experience"] == valid_candidate_payload["experience"]
+    assert data["name"] == payload["name"]
+    assert data["email"] == payload["email"]
+    assert data["phone"] == _phone_uri(payload["phone"])
+    assert data["experience"] == payload["experience"]
+    assert data["type"] == candidate_type
+
+    expected_step_types = [
+        step_cls.STEP_TYPE
+        for step_cls in _CANDIDATE_BY_TYPE[candidate_type].RECRUITMENT_STEPS
+    ]
+
+    async def fetch_step_types(session):
+        steps = await RecruitmentStepRepository(session).find_by_candidate(data["id"])
+        return [step.type for step in steps]
+
+    assert sorted(db_session(fetch_step_types)) == sorted(expected_step_types)
 
 
 @pytest.mark.parametrize(

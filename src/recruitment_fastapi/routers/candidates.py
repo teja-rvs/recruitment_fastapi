@@ -11,11 +11,6 @@ from recruitment_fastapi.schemas.candidates import (
 )
 from recruitment_fastapi.services.candidate import CandidateService
 
-router = APIRouter(
-    prefix="/candidates",
-    tags=["candidates"],
-)
-
 
 def get_candidate_service(
     session: SessionDep, background_tasks: BackgroundTasks
@@ -24,6 +19,11 @@ def get_candidate_service(
 
 
 CandidateServiceDep = Annotated[CandidateService, Depends(get_candidate_service)]
+
+router = APIRouter(
+    prefix="/candidates",
+    tags=["candidates"],
+)
 
 
 @router.post("/register")

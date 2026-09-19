@@ -1,7 +1,11 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
+from fastapi import BackgroundTasks
 
+from recruitment_fastapi.jobs.create_recruitment_steps_for_candidate import (
+    run_create_recruitment_steps_for_candidate,
+)
 from recruitment_fastapi.models import (
     EntryCandidate,
     MidCandidate,
@@ -20,8 +24,13 @@ def repository() -> AsyncMock:
 
 
 @pytest.fixture
-def service(repository: AsyncMock) -> CandidateService:
-    return CandidateService(repository)
+def background_tasks() -> Mock:
+    return Mock(spec=BackgroundTasks)
+
+
+@pytest.fixture
+def service(repository: AsyncMock, background_tasks: Mock) -> CandidateService:
+    return CandidateService(repository, background_tasks)
 
 
 @pytest.mark.asyncio
@@ -38,6 +47,7 @@ def service(repository: AsyncMock) -> CandidateService:
 async def test_create_candidate(
     service: CandidateService,
     repository: AsyncMock,
+    background_tasks: Mock,
     experience: int,
     expected_class: type,
 ):
@@ -55,6 +65,9 @@ async def test_create_candidate(
     assert isinstance(result, expected_class)
 
     repository.create.assert_awaited_once()
+    background_tasks.add_task.assert_called_once_with(
+        run_create_recruitment_steps_for_candidate, result.id
+    )
 
     created_candidate = repository.create.call_args.args[0]
 

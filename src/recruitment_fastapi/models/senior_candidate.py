@@ -11,8 +11,6 @@ from recruitment_fastapi.models.phone_screener_step import PhoneScreenerStep
 
 
 class SeniorCandidate(Candidate):
-    __mapper_args__: ClassVar = {"polymorphic_identity": "senior_candidate"}
-
     RECRUITMENT_STEPS: ClassVar = [
         PhoneScreenerStep,
         DsAlgoInterviewStep,
@@ -20,3 +18,7 @@ class SeniorCandidate(Candidate):
         HldInterviewStep,
         BackgroundVerificationStep,
     ]
+
+    CANDIDATE_TYPE: ClassVar = "senior_candidate"
+
+    __mapper_args__: ClassVar = {"polymorphic_identity": CANDIDATE_TYPE}

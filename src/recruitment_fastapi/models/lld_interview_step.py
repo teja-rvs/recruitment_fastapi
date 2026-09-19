@@ -4,4 +4,6 @@ from recruitment_fastapi.models.recruitment_step import RecruitmentStep
 
 
 class LldInterviewStep(RecruitmentStep):
-    __mapper_args__: ClassVar = {"polymorphic_identity": "lld_interview_step"}
+    STEP_TYPE: ClassVar = "lld_interview_step"
+
+    __mapper_args__: ClassVar = {"polymorphic_identity": STEP_TYPE}

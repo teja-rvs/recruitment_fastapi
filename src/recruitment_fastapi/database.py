@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterator
 from typing import Annotated
 
-from dotenv import load_dotenv
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -12,12 +11,11 @@ from sqlalchemy.orm import DeclarativeBase
 
 from recruitment_fastapi.config import settings
 
-load_dotenv()
-
 engine = create_async_engine(
     settings.database_url,
     echo=True,
 )
+
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
@@ -35,4 +33,7 @@ async def get_session() -> AsyncIterator[AsyncSession]:
         yield session
 
 
-SessionDep = Annotated[AsyncSession, Depends(get_session)]
+SessionDep = Annotated[
+    AsyncSession,
+    Depends(get_session),
+]
