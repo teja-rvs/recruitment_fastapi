@@ -10,11 +10,11 @@ class SignUpService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    async def sign_up(self, data: SignUpSchema) -> User:
+    async def sign_up(self, data: SignUpSchema) -> User | None:
         user = await self.repository.find_by_email(data.email)
 
         if user:
-            return False
+            return None
 
         hashed_password = await asyncify(password_hash.hash)(
             data.password.get_secret_value()

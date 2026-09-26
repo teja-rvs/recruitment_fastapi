@@ -10,15 +10,15 @@ class LoginService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    async def authenticate(self, data: LoginSchema) -> User:
+    async def authenticate(self, data: LoginSchema) -> User | None:
         user = await self.repository.find_by_email(data.email)
 
-        if user and await self.__verify_password(
+        if user and await self._verify_password(
             data.password.get_secret_value(), user.password_hash
         ):
             return user
-        else:
-            return False
 
-    async def __verify_password(self, password: str, hashed: str) -> bool:
+        return None
+
+    async def _verify_password(self, password: str, hashed: str) -> bool:
         return await asyncify(password_hash.verify)(password, hashed)

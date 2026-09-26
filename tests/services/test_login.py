@@ -60,7 +60,7 @@ async def test_authenticate_returns_user_for_valid_credentials(
         pytest.param("test@example.com", "invalid-password", True, id="wrong-password"),
     ],
 )
-async def test_authenticate_returns_false_for_invalid_credentials(
+async def test_authenticate_returns_none_for_invalid_credentials(
     repository,
     service,
     db_user,
@@ -77,4 +77,4 @@ async def test_authenticate_returns_false_for_invalid_credentials(
 
     user = await service.authenticate(login_data)
 
-    assert user is False
+    assert user is None

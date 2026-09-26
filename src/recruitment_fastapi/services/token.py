@@ -21,3 +21,6 @@ class TokenService:
         to_encode.update({"exp": expire})
 
         return await asyncify(jwt.encode)(to_encode, SECRET_KEY, ALGORITHM)
+
+    async def decode(self, token: str) -> dict:
+        return await asyncify(jwt.decode)(token, SECRET_KEY, algorithms=[ALGORITHM])

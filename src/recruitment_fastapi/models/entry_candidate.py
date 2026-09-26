@@ -6,6 +6,7 @@ from recruitment_fastapi.models.background_verification_step import (
 from recruitment_fastapi.models.candidate import Candidate
 from recruitment_fastapi.models.ds_algo_interview_step import DsAlgoInterviewStep
 from recruitment_fastapi.models.phone_screener_step import PhoneScreenerStep
+from recruitment_fastapi.models.recruitment_stage import RecruitmentStage
 
 
 class EntryCandidate(Candidate):
@@ -14,6 +15,12 @@ class EntryCandidate(Candidate):
         DsAlgoInterviewStep,
         BackgroundVerificationStep,
     ]
+
+    STAGES: ClassVar = (
+        RecruitmentStage((PhoneScreenerStep,)),
+        RecruitmentStage((DsAlgoInterviewStep,)),
+        RecruitmentStage((BackgroundVerificationStep,)),
+    )
 
     CANDIDATE_TYPE: ClassVar = "entry_candidate"
 

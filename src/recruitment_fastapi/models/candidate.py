@@ -6,9 +6,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from recruitment_fastapi.database import Base
+from recruitment_fastapi.states.base_machine import BaseMachine
+from recruitment_fastapi.states.candidate_status import CandidateStatusMachine
 
 
-class Candidate(Base):
+class Candidate(Base, BaseMachine):
     __tablename__ = "candidates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -36,6 +38,12 @@ class Candidate(Base):
         back_populates="candidate"
     )
 
+    status: Mapped[String] = mapped_column(
+        String(255),
+        nullable=False,
+        index=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -46,3 +54,24 @@ class Candidate(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    RECRUITMENT_STEPS: ClassVar = []
+    STAGES: ClassVar = ()
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.status = CandidateStatusMachine.initial_state.value
+
+    @property
+    def status_machine(self) -> CandidateStatusMachine:
+        if not hasattr(self, "_status_machine"):
+            self._status_machine = CandidateStatusMachine(
+                model=self, state_field="status"
+            )
+        return self._status_machine
+
+    def recruit(self):
+        self.status_machine.recruit()
+
+    def reject(self):
+        self.status_machine.reject()

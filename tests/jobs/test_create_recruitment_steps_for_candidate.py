@@ -43,7 +43,5 @@ async def test_create_recruitment_steps_for_candidate(
 
     recruitment_step_repository.create_all.assert_awaited_once()
     created_steps = recruitment_step_repository.create_all.await_args.args[0]
-    assert [type(step) for step in created_steps] == list(
-        type(candidate).RECRUITMENT_STEPS
-    )
+    assert [type(step) for step in created_steps] == list(candidate.RECRUITMENT_STEPS)
     assert all(step.candidate_id == candidate.id for step in created_steps)

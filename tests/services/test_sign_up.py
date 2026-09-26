@@ -57,5 +57,5 @@ async def test_sign_up_with_existing_user(
 
     user = await service.sign_up(sign_up_data)
 
-    assert user is False
+    assert user is None
     repository.create.assert_not_awaited()

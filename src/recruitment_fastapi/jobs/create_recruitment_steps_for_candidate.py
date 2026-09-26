@@ -11,9 +11,18 @@ async def create_recruitment_steps_for_candidate(
     candidate = await candidate_repository.find(candidate_id)
     steps = [
         step_class(candidate_id=candidate.id)
-        for step_class in type(candidate).RECRUITMENT_STEPS
+        for step_class in candidate.RECRUITMENT_STEPS
     ]
-    await recruitment_step_repository.create_all(steps)
+
+    recruitment_steps = await recruitment_step_repository.create_all(steps)
+
+    phone_screener_steps = [
+        step for step in recruitment_steps if step.type == "phone_screener_step"
+    ]
+
+    for step in phone_screener_steps:
+        step.start()
+        await recruitment_step_repository.save(step)
 
     return True
 

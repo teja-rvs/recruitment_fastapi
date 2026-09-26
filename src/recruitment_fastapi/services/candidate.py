@@ -16,7 +16,7 @@ class CandidateService:
         self.background_tasks = background_tasks
 
     async def create_candidate(self, data: CreateCandidateSchema):
-        candidate_class = self.__candidate_class(data.experience)
+        candidate_class = self._candidate_class(data.experience)
         candidate = candidate_class(**data.model_dump())
         created_candidate = await self.repository.create(candidate)
         self.background_tasks.add_task(
@@ -26,7 +26,7 @@ class CandidateService:
 
     # Private
 
-    def __candidate_class(
+    def _candidate_class(
         self,
         exp: int,
     ) -> type[EntryCandidate | MidCandidate | SeniorCandidate]:

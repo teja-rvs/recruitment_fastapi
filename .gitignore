@@ -26,3 +26,6 @@ htmlcov/
 
 # OS
 .DS_Store
+
+# Database dump (Initial Setup)
+dump.sql

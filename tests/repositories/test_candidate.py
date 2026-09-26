@@ -6,7 +6,7 @@ from psycopg.errors import NotNullViolation, UniqueViolation
 from sqlalchemy.exc import IntegrityError
 
 from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
-from recruitment_fastapi.models.candidate import Candidate
+from recruitment_fastapi.models import Candidate, RecruitmentStep
 from recruitment_fastapi.repositories.candidate import CandidateRepository
 
 pytestmark = pytest.mark.unit
@@ -28,10 +28,7 @@ class MockUniqueViolation(UniqueViolation):
 
 @pytest.fixture
 def session() -> AsyncMock:
-    mock_session = AsyncMock()
-    mock_session.add = Mock()
-    mock_session.refresh = AsyncMock()
-    return mock_session
+    return AsyncMock()
 
 
 @pytest.fixture
@@ -42,17 +39,25 @@ def repository(session) -> CandidateRepository:
 @pytest.fixture
 def candidate():
     return Candidate(
-        name="Candidate", email="candidate@example.com", phone="1234567890"
+        id=1, name="Candidate", email="candidate@example.com", phone="1234567890"
     )
+
+
+@pytest.fixture
+def candidate_with_steps(candidate):
+    candidate.recruitment_steps = [RecruitmentStep(id=1), RecruitmentStep(id=2)]
+    return candidate
 
 
 @pytest.mark.asyncio
 async def test_create_successful(repository, session, candidate):
-    await repository.create(candidate)
+    result = await repository.create(candidate)
 
     session.add.assert_called_once_with(candidate)
     session.commit.assert_awaited_once()
     session.refresh.assert_awaited_once_with(candidate)
+
+    assert result is candidate
 
 
 @pytest.mark.asyncio
@@ -100,3 +105,53 @@ async def test_create_integrity_error_non_unique_violation(
         await repository.create(candidate)
 
     session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_find_returns_candidate(repository, session, candidate):
+    session.get.return_value = candidate
+
+    result = await repository.find(candidate.id)
+
+    assert result is candidate
+    session.get.assert_awaited_once_with(Candidate, candidate.id)
+
+
+@pytest.mark.asyncio
+async def test_find_returns_none(repository, session):
+    session.get.return_value = None
+
+    result = await repository.find(1)
+
+    assert result is None
+    session.get.assert_awaited_once_with(Candidate, 1)
+
+
+@pytest.mark.asyncio
+async def test_find_with_current_recruitment_steps_returns_candidate(
+    session, repository, candidate_with_steps
+):
+    result = Mock()
+    result.scalar_one_or_none.return_value = candidate_with_steps
+    session.execute.return_value = result
+
+    candidate = await repository.find_with_current_recruitment_steps(
+        candidate_with_steps.id
+    )
+
+    assert candidate is candidate_with_steps
+
+    session.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_find_with_current_recruitment_steps_returns_none(session, repository):
+    result = Mock()
+    result.scalar_one_or_none.return_value = None
+    session.execute.return_value = result
+
+    candidate = await repository.find_with_current_recruitment_steps(1)
+
+    assert candidate is None
+
+    session.execute.assert_awaited_once()

@@ -1,12 +1,13 @@
 from typing import ClassVar
 
-from recruitment_fastapi.models.background_verification_step import (
+from recruitment_fastapi.models import (
     BackgroundVerificationStep,
+    Candidate,
+    DsAlgoInterviewStep,
+    LldInterviewStep,
 )
-from recruitment_fastapi.models.candidate import Candidate
-from recruitment_fastapi.models.ds_algo_interview_step import DsAlgoInterviewStep
-from recruitment_fastapi.models.lld_interview_step import LldInterviewStep
 from recruitment_fastapi.models.phone_screener_step import PhoneScreenerStep
+from recruitment_fastapi.models.recruitment_stage import RecruitmentStage
 
 
 class MidCandidate(Candidate):
@@ -16,6 +17,13 @@ class MidCandidate(Candidate):
         LldInterviewStep,
         BackgroundVerificationStep,
     ]
+
+    STAGES: ClassVar = (
+        RecruitmentStage((PhoneScreenerStep,)),
+        RecruitmentStage((DsAlgoInterviewStep,)),
+        RecruitmentStage((LldInterviewStep,)),
+        RecruitmentStage((BackgroundVerificationStep,)),
+    )
 
     CANDIDATE_TYPE: ClassVar = "mid_candidate"
 

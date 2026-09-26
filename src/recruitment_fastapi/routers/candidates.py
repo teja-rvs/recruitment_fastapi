@@ -1,24 +1,10 @@
-from typing import Annotated
+from fastapi import APIRouter
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
-
-from recruitment_fastapi.database import SessionDep
-from recruitment_fastapi.errors.duplicate_resource_error import DuplicateResourceError
-from recruitment_fastapi.repositories.candidate import CandidateRepository
+from recruitment_fastapi.dependencies.services import CandidateServiceDep
 from recruitment_fastapi.schemas.candidates import (
     CandidateResponseSchema,
     CreateCandidateSchema,
 )
-from recruitment_fastapi.services.candidate import CandidateService
-
-
-def get_candidate_service(
-    session: SessionDep, background_tasks: BackgroundTasks
-) -> CandidateService:
-    return CandidateService(CandidateRepository(session), background_tasks)
-
-
-CandidateServiceDep = Annotated[CandidateService, Depends(get_candidate_service)]
 
 router = APIRouter(
     prefix="/candidates",
@@ -31,9 +17,4 @@ async def register_candidate(
     candidate: CreateCandidateSchema,
     service: CandidateServiceDep,
 ) -> CandidateResponseSchema:
-    try:
-        created = await service.create_candidate(candidate)
-    except DuplicateResourceError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-
-    return CandidateResponseSchema.model_validate(created)
+    return await service.create_candidate(candidate)

@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from recruitment_fastapi.database import get_session
 from recruitment_fastapi.main import app
+from tests.helpers.auth import auth_headers  # noqa: F401
+from tests.helpers.user import create_user_with_permissions  # noqa: F401
 
 T = TypeVar("T")
 
@@ -77,3 +79,12 @@ async def _truncate_tables(engine: AsyncEngine) -> None:
         await connection.execute(
             text(f"TRUNCATE TABLE {table_names} RESTART IDENTITY CASCADE")
         )
+
+
+@pytest.fixture(autouse=True)
+def setup_factory_sessions(session_factory: async_sessionmaker[AsyncSession]):
+    from tests.factories.base import AsyncSessionPersistence, BaseTestFactory
+
+    BaseTestFactory.__async_persistence__ = AsyncSessionPersistence(session_factory)
+    yield
+    BaseTestFactory.__async_persistence__ = None
