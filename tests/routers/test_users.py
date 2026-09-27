@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest_asyncio.fixture
-async def users():
+async def users(setup_factory_sessions):
     return [
         await UserFactory.create_async(),
         await UserFactory.create_async(),
@@ -88,7 +88,7 @@ async def test_assign_role_with_invalid_roles(
 
 
 @pytest_asyncio.fixture
-async def roles():
+async def roles(setup_factory_sessions):
     return [
         await RoleFactory.create_async(name="Role One"),
         await RoleFactory.create_async(name="Role Two"),
@@ -169,6 +169,24 @@ async def test_assign_roles_to_another_user(
         "Role Two",
         "Role Three",
     }
+
+
+@pytest.mark.asyncio
+async def test_assigned_roles_are_listed_for_target_user_only(
+    client, create_user_with_permissions, auth_headers, roles
+):
+    current_user = await create_user_with_permissions(
+        ["users:access", "users:view", "users:assign_roles"]
+    )
+    target_user = await UserFactory.create_async()
+    headers = await auth_headers(current_user)
+
+    assigned = client.post(
+        f"/users/{target_user.id}/assign_roles",
+        headers=headers,
+        json=[role.id for role in roles],
+    )
+    assert assigned.status_code == 200
 
     target_roles = client.get(f"/users/{target_user.id}/roles", headers=headers)
     assert target_roles.status_code == 200

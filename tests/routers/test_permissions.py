@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest_asyncio.fixture
-async def permissions():
+async def permissions(setup_factory_sessions):
     return [
         await PermissionFactory.create_async(name="candidates:view"),
         await PermissionFactory.create_async(name="candidates:create"),
@@ -63,7 +63,25 @@ async def test_create_permission(client, create_user_with_permissions, auth_head
     assert response_json["created_at"]
     assert response_json["updated_at"]
 
+
+@pytest.mark.asyncio
+async def test_created_permission_is_listed(
+    client, create_user_with_permissions, auth_headers
+):
+    current_user = await create_user_with_permissions(
+        ["permissions:access", "permissions:create", "permissions:view"]
+    )
+    headers = await auth_headers(current_user)
+
+    created = client.post(
+        "/admin/permissions",
+        headers=headers,
+        json={"model": "candidates", "permission": "view"},
+    )
+    assert created.status_code == 200
+
     listed = client.get("/admin/permissions", headers=headers)
+
     assert listed.status_code == 200
     assert {permission["name"] for permission in listed.json()} == {
         "permissions:access",

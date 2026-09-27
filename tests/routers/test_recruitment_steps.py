@@ -17,12 +17,33 @@ from tests.factories import (
 
 pytestmark = pytest.mark.integration
 
-_FUTURE_INTERVIEW_DATE = (datetime.now(tz=UTC).date() + timedelta(days=1)).isoformat()
-_TODAY = datetime.now(tz=UTC).date().isoformat()
+_FUTURE_DATE = "future"
+_TODAY_DATE = "today"
+
+
+def _future_interview_date() -> str:
+    return (datetime.now(tz=UTC).date() + timedelta(days=1)).isoformat()
+
+
+def _today() -> str:
+    return datetime.now(tz=UTC).date().isoformat()
+
+
+def _resolve_dates(payload: dict | None) -> dict | None:
+    if payload is None:
+        return None
+
+    resolved = dict(payload)
+    interview_date = resolved.get("interview_date")
+    if interview_date == _FUTURE_DATE:
+        resolved["interview_date"] = _future_interview_date()
+    elif interview_date == _TODAY_DATE:
+        resolved["interview_date"] = _today()
+    return resolved
 
 
 @pytest_asyncio.fixture
-async def candidate():
+async def candidate(setup_factory_sessions):
     return await EntryCandidateFactory.create_async()
 
 
@@ -114,13 +135,14 @@ async def test_assign_interviewer(
     interviewer = await create_user_with_permissions([], role="Recruiter")
     headers = await auth_headers(current_user)
     await _transition_step(session_factory, phone_screener_step, "start")
+    interview_date = _future_interview_date()
 
     response = client.post(
         f"/recruitment_steps/{phone_screener_step.id}/assign_interviewer",
         headers=headers,
         json={
             "interviewer_id": interviewer.id,
-            "interview_date": _FUTURE_INTERVIEW_DATE,
+            "interview_date": interview_date,
         },
     )
 
@@ -130,14 +152,14 @@ async def test_assign_interviewer(
     assert response_json["id"] == phone_screener_step.id
     assert response_json["type"] == "phone_screener_step"
     assert response_json["status"] == "interview_scheduled"
-    assert response_json["interview_date"] == _FUTURE_INTERVIEW_DATE
+    assert response_json["interview_date"] == interview_date
     assert response_json["interviewer"]["id"] == interviewer.id
     assert response_json["interviewer"]["email"] == interviewer.email
     assert "password_hash" not in response_json["interviewer"]
 
     listed = _listed_step(client, headers, phone_screener_step.id)
     assert listed["status"] == "interview_scheduled"
-    assert listed["interview_date"] == _FUTURE_INTERVIEW_DATE
+    assert listed["interview_date"] == interview_date
     assert listed["interviewer"]["id"] == interviewer.id
 
 
@@ -154,18 +176,19 @@ async def test_assign_interviewer_with_interview_date_only(
     )
     headers = await auth_headers(current_user)
     await _transition_step(session_factory, phone_screener_step, "start")
+    interview_date = _future_interview_date()
 
     response = client.post(
         f"/recruitment_steps/{phone_screener_step.id}/assign_interviewer",
         headers=headers,
-        json={"interview_date": _FUTURE_INTERVIEW_DATE},
+        json={"interview_date": interview_date},
     )
 
     assert response.status_code == 200
 
     response_json = response.json()
     assert response_json["status"] == "in_progress"
-    assert response_json["interview_date"] == _FUTURE_INTERVIEW_DATE
+    assert response_json["interview_date"] == interview_date
     assert response_json["interviewer"] is None
 
 
@@ -214,7 +237,7 @@ async def test_assign_interviewer_when_interviewer_not_found(
         headers=headers,
         json={
             "interviewer_id": 999,
-            "interview_date": _FUTURE_INTERVIEW_DATE,
+            "interview_date": _future_interview_date(),
         },
     )
 
@@ -236,7 +259,7 @@ async def test_assign_interviewer_when_user_lacks_allowed_role(
         headers=headers,
         json={
             "interviewer_id": current_user.id,
-            "interview_date": _FUTURE_INTERVIEW_DATE,
+            "interview_date": _future_interview_date(),
         },
     )
 
@@ -522,7 +545,7 @@ async def test_reject_without_feedback(
     [
         pytest.param(
             "assign_interviewer",
-            {"interviewer_id": 1, "interview_date": _FUTURE_INTERVIEW_DATE},
+            {"interviewer_id": 1, "interview_date": _FUTURE_DATE},
             ["recruitment_steps:access", "recruitment_steps:assign_interviewer"],
             id="assign-interviewer",
         ),
@@ -565,7 +588,7 @@ async def test_recruitment_step_routes_return_not_found(
     headers = await auth_headers(current_user)
     kwargs = {"headers": headers}
     if json_body is not None:
-        kwargs["json"] = json_body
+        kwargs["json"] = _resolve_dates(json_body)
 
     response = client.post(f"/recruitment_steps/100/{action}", **kwargs)
 
@@ -614,7 +637,7 @@ async def test_interviewer_routes_forbidden_for_non_interviewer(
 
     kwargs = {"headers": headers}
     if json_body is not None:
-        kwargs["json"] = json_body
+        kwargs["json"] = _resolve_dates(json_body)
 
     response = client.post(
         f"/recruitment_steps/{phone_screener_step.id}/{action}",
@@ -629,7 +652,7 @@ async def test_interviewer_routes_forbidden_for_non_interviewer(
     ("payload", "loc"),
     [
         pytest.param(
-            {"interviewer_id": 0, "interview_date": _FUTURE_INTERVIEW_DATE},
+            {"interviewer_id": 0, "interview_date": _FUTURE_DATE},
             ("body", "interviewer_id"),
             id="interviewer-id-not-positive",
         ),
@@ -644,7 +667,7 @@ async def test_interviewer_routes_forbidden_for_non_interviewer(
             id="interview-date-in-the-past",
         ),
         pytest.param(
-            {"interview_date": _TODAY},
+            {"interview_date": _TODAY_DATE},
             ("body", "interview_date"),
             id="interview-date-today",
         ),
@@ -667,7 +690,7 @@ async def test_assign_interviewer_rejects_invalid_payload(
     response = client.post(
         f"/recruitment_steps/{phone_screener_step.id}/assign_interviewer",
         headers=headers,
-        json=payload,
+        json=_resolve_dates(payload),
     )
 
     _assert_validation_error(response, loc)
@@ -703,7 +726,7 @@ async def test_review_rejects_invalid_payload(
     response = client.post(
         f"/recruitment_steps/{phone_screener_step.id}/review",
         headers=headers,
-        json=payload,
+        json=_resolve_dates(payload),
     )
 
     _assert_validation_error(response, loc)
@@ -757,7 +780,7 @@ async def test_recruitment_step_routes_reject_non_positive_step_id(
     headers = await auth_headers(current_user)
     kwargs = {"headers": headers}
     if json_body is not None:
-        kwargs["json"] = json_body
+        kwargs["json"] = _resolve_dates(json_body)
 
     response = client.post(f"/recruitment_steps/0/{action}", **kwargs)
 
@@ -771,7 +794,7 @@ async def test_recruitment_step_routes_reject_non_positive_step_id(
         pytest.param(
             "post",
             "/recruitment_steps/1/assign_interviewer",
-            {"interviewer_id": 1, "interview_date": _FUTURE_INTERVIEW_DATE},
+            {"interviewer_id": 1, "interview_date": _FUTURE_DATE},
             id="assign-interviewer",
         ),
         pytest.param(
@@ -793,7 +816,7 @@ async def test_recruitment_step_routes_reject_non_positive_step_id(
 def test_recruitment_step_routes_require_authentication(
     client, method, path, json_body
 ):
-    kwargs = {} if json_body is None else {"json": json_body}
+    kwargs = {} if json_body is None else {"json": _resolve_dates(json_body)}
     response = client.request(method, path, **kwargs)
 
     assert response.status_code == 401
@@ -945,7 +968,7 @@ async def test_recruitment_step_routes_forbidden_without_required_permission(
     headers = await auth_headers(current_user)
     kwargs = {"headers": headers}
     if json_body is not None:
-        kwargs["json"] = json_body
+        kwargs["json"] = _resolve_dates(json_body)
 
     response = client.request(method, path, **kwargs)
 

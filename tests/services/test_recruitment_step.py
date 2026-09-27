@@ -116,9 +116,10 @@ async def test_assign_interview_interviewer_not_found(
 
     with pytest.raises(ResourceNotFoundError, match="Interviewer not found"):
         await service.assign_interviewer(in_progress_step, assign_interviewer_data)
-        repository.allowed_interviewer.assert_awaited_once_with(
-            interviewer.id, in_progress_step.allowed_roles()
-        )
+
+    repository.allowed_interviewer.assert_awaited_once_with(
+        assign_interviewer_data.interviewer_id, in_progress_step.allowed_roles()
+    )
 
 
 @pytest.mark.asyncio
@@ -146,7 +147,7 @@ async def test_assign_interviewer_with_interview_date_only(
 async def test_assign_interviewer_with_interviewer_only(
     repository, service, in_progress_step, assign_interviewer_data, interviewer
 ):
-    data = assign_interviewer_data.copy()
+    data = assign_interviewer_data.model_copy()
     data.interview_date = None
 
     repository.allowed_interviewer.return_value = interviewer
@@ -193,7 +194,8 @@ async def test_review_with_not_in_review_step(repository, service, in_progress_s
         InvalidStateError, match="Recruitment step must be in review stage"
     ):
         await service.review(in_progress_step, data)
-        repository.save.assert_not_awaited()
+
+    repository.save.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -232,8 +234,9 @@ async def test_approve_without_feedback(
 ):
     with pytest.raises(InvalidStateError, match="Provide feedback before approval"):
         await service.approve(in_review_step)
-        background_tasks.add_task.assert_not_called()
-        repository.save.assert_not_awaited()
+
+    background_tasks.add_task.assert_not_called()
+    repository.save.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -253,4 +256,5 @@ async def test_reject(repository, service, review_done_step, recruitment_steps):
 async def test_reject_without_feedback(repository, service, in_review_step):
     with pytest.raises(InvalidStateError, match="Provide feedback before rejection"):
         await service.reject(in_review_step)
-        repository.save.assert_not_awaited()
+
+    repository.save.assert_not_awaited()

@@ -62,9 +62,9 @@ def _phone_uri(value: str) -> str:
 @pytest.mark.parametrize(
     ("field", "value", "candidate_type"),
     [
-        pytest.param("experience", 1, EntryCandidate.CANDIDATE_TYPE),
-        pytest.param("experience", 4, MidCandidate.CANDIDATE_TYPE),
-        pytest.param("experience", 10, SeniorCandidate.CANDIDATE_TYPE),
+        pytest.param("experience", 1, EntryCandidate.CANDIDATE_TYPE, id="entry"),
+        pytest.param("experience", 4, MidCandidate.CANDIDATE_TYPE, id="mid"),
+        pytest.param("experience", 10, SeniorCandidate.CANDIDATE_TYPE, id="senior"),
     ],
 )
 def test_successful_candidate_registration(

@@ -9,11 +9,6 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
-def session() -> AsyncMock:
-    return AsyncMock()
-
-
-@pytest.fixture
 def repository(session: AsyncMock) -> RoleRepository:
     return RoleRepository(session)
 

@@ -1,4 +1,4 @@
-from unittest.mock import ANY, AsyncMock, Mock
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -6,11 +6,6 @@ from recruitment_fastapi.models import RecruitmentStep, User
 from recruitment_fastapi.repositories.recruitment_step import RecruitmentStepRepository
 
 pytestmark = pytest.mark.unit
-
-
-@pytest.fixture
-def session() -> AsyncMock:
-    return AsyncMock()
 
 
 @pytest.fixture

@@ -7,7 +7,7 @@ pytestmark = pytest.mark.integration
 
 
 @pytest_asyncio.fixture
-async def roles():
+async def roles(setup_factory_sessions):
     return [
         await RoleFactory.create_async(name="Role One", key="role_one"),
         await RoleFactory.create_async(name="Role Two", key="role_two"),
@@ -16,7 +16,7 @@ async def roles():
 
 
 @pytest_asyncio.fixture
-async def permissions():
+async def permissions(setup_factory_sessions):
     return [
         await PermissionFactory.create_async(name="candidates:view"),
         await PermissionFactory.create_async(name="candidates:create"),
@@ -69,7 +69,25 @@ async def test_create_role(client, create_user_with_permissions, auth_headers):
     assert response_json["updated_at"]
     assert "permissions" not in response_json
 
+
+@pytest.mark.asyncio
+async def test_created_role_is_listed(
+    client, create_user_with_permissions, auth_headers
+):
+    current_user = await create_user_with_permissions(
+        ["roles:access", "roles:create", "roles:view"]
+    )
+    headers = await auth_headers(current_user)
+
+    created = client.post(
+        "/admin/roles",
+        headers=headers,
+        json={"name": "Hiring Manager"},
+    )
+    assert created.status_code == 200
+
     listed = client.get("/admin/roles", headers=headers)
+
     assert listed.status_code == 200
     assert {role["name"]: role["key"] for role in listed.json()} == {
         "Test Role": "test_role",
@@ -205,7 +223,26 @@ async def test_assign_permissions_to_another_role(
         "candidates:update",
     }
 
+
+@pytest.mark.asyncio
+async def test_role_with_assigned_permissions_is_listed(
+    client, create_user_with_permissions, auth_headers, permissions
+):
+    current_user = await create_user_with_permissions(
+        ["roles:access", "roles:view", "roles:assign_permissions"]
+    )
+    target_role = await RoleFactory.create_async(name="Role One", key="role_one")
+    headers = await auth_headers(current_user)
+
+    assigned = client.post(
+        f"/admin/roles/{target_role.id}/assign_permissions",
+        headers=headers,
+        json=[permission.id for permission in permissions],
+    )
+    assert assigned.status_code == 200
+
     listed = client.get("/admin/roles", headers=headers)
+
     assert listed.status_code == 200
     assert {role["name"]: role["key"] for role in listed.json()} == {
         "Test Role": "test_role",

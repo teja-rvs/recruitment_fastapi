@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 from psycopg.errors import NotNullViolation, UniqueViolation
@@ -24,11 +24,6 @@ class MockUniqueViolation(UniqueViolation):
     @diag.setter
     def diag(self, value):
         self._diag = value
-
-
-@pytest.fixture
-def session() -> AsyncMock:
-    return AsyncMock()
 
 
 @pytest.fixture

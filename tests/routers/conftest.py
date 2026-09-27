@@ -81,7 +81,7 @@ async def _truncate_tables(engine: AsyncEngine) -> None:
         )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def setup_factory_sessions(session_factory: async_sessionmaker[AsyncSession]):
     from tests.factories.base import AsyncSessionPersistence, BaseTestFactory
 

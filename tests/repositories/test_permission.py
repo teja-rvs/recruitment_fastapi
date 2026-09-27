@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -6,11 +6,6 @@ from recruitment_fastapi.models import Permission
 from recruitment_fastapi.repositories.permission import PermissionRepository
 
 pytestmark = pytest.mark.unit
-
-
-@pytest.fixture
-def session() -> AsyncMock:
-    return AsyncMock()
 
 
 @pytest.fixture

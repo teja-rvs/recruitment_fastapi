@@ -49,12 +49,19 @@ def test_successful_signup(client, signup_payload_factory):
 
     response = client.post("/auth/signup", json=payload)
 
-    decoded = _assert_access_token(response)
+    _assert_access_token(response)
+
+
+def test_login_after_signup(client, signup_payload_factory):
+    payload = signup_payload_factory()
+    signup = client.post("/auth/signup", json=payload)
+    decoded = _assert_access_token(signup)
 
     login = client.post(
         "/auth/login",
         json={"email": payload["email"], "password": payload["password"]},
     )
+
     _assert_access_token(login, user_id=decoded["user_id"])
 
 

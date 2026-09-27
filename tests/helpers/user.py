@@ -8,7 +8,7 @@ def snake_case(text: str) -> str:
 
 
 @pytest.fixture
-def create_user_with_permissions():
+def create_user_with_permissions(setup_factory_sessions):
     async def create_user(
         permissions: list[str] | None = None,
         role: str = "Test Role",
@@ -31,12 +31,3 @@ def create_user_with_permissions():
         )
 
     return create_user
-
-
-@pytest.fixture
-async def users():
-    return [
-        await UserFactory.create_async(id=1),
-        await UserFactory.create_async(id=2),
-        await UserFactory.create_async(id=3),
-    ]

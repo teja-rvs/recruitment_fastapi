@@ -12,7 +12,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 ALEMBIC_INI = PROJECT_ROOT / "src" / "recruitment_fastapi" / "alembic.ini"
 
-_UNIT_TEST_DIR_NAMES = frozenset({"services", "repositories", "jobs"})
+_INTEGRATION_TEST_DIR_NAMES = frozenset({"routers"})
 
 
 def _session_needs_test_database(config: pytest.Config) -> bool:
@@ -38,7 +38,7 @@ def _is_unit_only_arg(arg: str) -> bool:
     if tests_index + 1 >= len(parts):
         return False
 
-    return parts[tests_index + 1] in _UNIT_TEST_DIR_NAMES
+    return parts[tests_index + 1] not in _INTEGRATION_TEST_DIR_NAMES
 
 
 def pytest_configure(config: pytest.Config) -> None:
