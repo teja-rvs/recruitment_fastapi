@@ -1,0 +1,24 @@
+from asyncer import asyncify
+
+from recruitment_fastapi.models.user import User
+from recruitment_fastapi.repositories.user import UserRepository
+from recruitment_fastapi.schemas.auth import LoginSchema
+from recruitment_fastapi.services.password import password_hash
+
+
+class LoginService:
+    def __init__(self, repository: UserRepository):
+        self.repository = repository
+
+    async def authenticate(self, data: LoginSchema) -> User | None:
+        user = await self.repository.find_by_email(data.email)
+
+        if user and await self._verify_password(
+            data.password.get_secret_value(), user.password_hash
+        ):
+            return user
+
+        return None
+
+    async def _verify_password(self, password: str, hashed: str) -> bool:
+        return await asyncify(password_hash.verify)(password, hashed)
